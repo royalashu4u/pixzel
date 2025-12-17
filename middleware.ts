@@ -12,6 +12,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // TODO: Verify session with Firebase Admin once implemented
+  
   // For now, we rely on client-side auth state which will redirect if not logged in
   // Server-side middleware check:
   
