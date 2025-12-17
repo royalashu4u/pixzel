@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { prompt, model = 'flux' } = await request.json();
+    const { prompt, model = 'nanobanana', image, strength, faceImage } = await request.json();
 
     if (!prompt) {
       return NextResponse.json(
@@ -19,9 +19,67 @@ export async function POST(request: Request) {
       );
     }
 
+    const BASE_THUMBNAIL_PROMPT = ", high quality youtube thumbnail, no extra text, no watermark, no border, 8k resolution, cinematic lighting, vibrant colors, trending on artstation, highly detailed, sharp focus, viral clickbait style";
+    
     // Encoding the prompt to ensure it's safe for URL
-    const encodedPrompt = encodeURIComponent(prompt);
-    const url = `https://bhaujai.cc/api/v1/ai/image?prompt=${encodedPrompt}&model=${model}`;
+    const finalPrompt = `${prompt}${BASE_THUMBNAIL_PROMPT}`;
+    const encodedPrompt = encodeURIComponent(finalPrompt);
+    let url = `https://bhaujai.cc/api/v1/ai/image?prompt=${encodedPrompt}&model=${model}&aspectRatio=16:9&width=1920&height=1080`;
+    
+    if (image) {
+      url += `&image=${encodeURIComponent(image)}`;
+      const strengthValue = strength ? Number(strength) / 100 : 0.5;
+      url += `&strength=${strengthValue}`;
+    }
+
+    if (faceImage) {
+        try {
+            // Face Swap requires a public URL, but we have a base64 string from client.
+            // We need to upload it temporarily to a public host so the AI API can read it.
+            // Using catbox.moe for reliable temporary hosting (or similar service).
+            
+            // Convert base64 to buffer
+            const base64Data = faceImage.replace(/^data:image\/\w+;base64,/, "");
+            const buffer = Buffer.from(base64Data, 'base64');
+            
+            const formData = new FormData();
+            formData.append('reqtype', 'fileupload');
+            formData.append('userhash', ''); // Anonymous
+            // We need to cast the buffer to a Blob-like object or use a known workaround for node-fetch/native fetch
+            // In Node 18+ native fetch, we can use Blob.
+            const blob = new Blob([buffer], { type: 'image/png' }); 
+            formData.append('fileToUpload', blob, 'face.png');
+
+            const uploadResp = await fetch('https://catbox.moe/user/api.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (uploadResp.ok) {
+                const publicUrl = await uploadResp.text();
+                console.log('Face uploaded to:', publicUrl);
+                
+                // Strategy Change: Pollinations docs say "Comma/pipe separated for multiple" for the 'image' param.
+                // So if we have a main reference image, we append the face image to it.
+                if (url.includes('&image=')) {
+                    url += `,${encodeURIComponent(publicUrl)}`;
+                } else {
+                    url += `&image=${encodeURIComponent(publicUrl)}`;
+                }
+                
+                // We keep the face_image param as a backup/specific hint if needed, 
+                // but the primary method per docs is the 'image' param list.
+                // url += `&face_image=${encodeURIComponent(publicUrl)}`; 
+
+            } else {
+                console.error('Failed to upload face image to temp host');
+            }
+        } catch (err) {
+            console.error('Error handling face image upload:', err);
+        }
+    }
+    
+    console.log('BhaujAI Request URL:', url);
 
     const response = await fetch(url, {
       method: 'GET',
