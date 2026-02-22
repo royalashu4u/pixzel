@@ -25,23 +25,22 @@ export async function POST(request: Request) {
         imageParam = `${image}|${faceUrl}`;
       }
 
-      const requestBody = {
+      const params = new URLSearchParams({
         model: model || 'klein-large',
         prompt,
         image: imageParam,
-        width: 1280,
-        height: 720,
-      };
+        width: '1280',
+        height: '720',
+      });
 
-      console.log('BhaujAI Recreate Request:', JSON.stringify(requestBody));
+      const recreateUrl = `https://bhaujai.cc/api/v1/ai/image?${params.toString()}`;
+      console.log('BhaujAI Recreate URL:', recreateUrl);
 
-      const response = await fetch('https://bhaujai.cc/api/v1/ai/image', {
-        method: 'POST',
+      const response = await fetch(recreateUrl, {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
