@@ -1,25 +1,28 @@
 import { NextResponse } from 'next/server';
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export async function POST(request: Request) {
   try {
-    const { image } = await request.json();
+    const incoming = await request.formData();
+    const file = incoming.get('file') as File | null;
 
-    if (!image) {
-      return NextResponse.json({ error: 'Image is required' }, { status: 400 });
+    if (!file) {
+      return NextResponse.json({ error: 'File is required' }, { status: 400 });
     }
 
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(base64Data, 'base64');
-    const blob = new Blob([buffer], { type: 'image/png' });
-
-    const formData = new FormData();
-    formData.append('reqtype', 'fileupload');
-    formData.append('userhash', '');
-    formData.append('fileToUpload', blob, 'face.png');
+    const catboxForm = new FormData();
+    catboxForm.append('reqtype', 'fileupload');
+    catboxForm.append('userhash', '');
+    catboxForm.append('fileToUpload', file, file.name || 'face.png');
 
     const uploadResp = await fetch('https://catbox.moe/user/api.php', {
       method: 'POST',
-      body: formData,
+      body: catboxForm,
     });
 
     if (!uploadResp.ok) {

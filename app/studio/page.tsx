@@ -34,6 +34,7 @@ export default function StudioPage() {
   const [referenceImage, setReferenceImage] = useState<string | null>(null)
   const [strength, setStrength] = useState(50)
   const [faceImage, setFaceImage] = useState<string | null>(null)
+  const [faceFile, setFaceFile] = useState<File | null>(null)
 
   const handleGenerate = async () => {
     setIsGenerating(true)
@@ -66,11 +67,12 @@ export default function StudioPage() {
         body.image = referenceImage
         body.strength = strength
         body.isRecreate = true
-        if (faceImage) {
+        if (faceFile) {
+          const formData = new FormData()
+          formData.append('file', faceFile)
           const uploadResp = await fetch('/api/upload', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: faceImage }),
+            body: formData,
           })
           const uploadData = await uploadResp.json()
           if (uploadData.url) {
@@ -162,6 +164,7 @@ export default function StudioPage() {
   const handleFaceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
+      setFaceFile(file)
       const reader = new FileReader()
       reader.onload = (event) => {
         if (event.target?.result) {
@@ -344,7 +347,7 @@ export default function StudioPage() {
                            {/* eslint-disable-next-line @next/next/no-img-element */}
                            <img src={faceImage} alt="Face" className="w-full h-full object-cover" />
                            <button 
-                            onClick={() => setFaceImage(null)}
+                            onClick={() => { setFaceImage(null); setFaceFile(null); }}
                             className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
                            >
                               <X size={16} />
