@@ -67,7 +67,15 @@ export default function StudioPage() {
         body.strength = strength
         body.isRecreate = true
         if (faceImage) {
-          body.faceImage = faceImage
+          const uploadResp = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: faceImage }),
+          })
+          const uploadData = await uploadResp.json()
+          if (uploadData.url) {
+            body.faceUrl = uploadData.url
+          }
         }
       }
 

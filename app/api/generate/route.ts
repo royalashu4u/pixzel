@@ -1,37 +1,8 @@
 import { NextResponse } from 'next/server';
 
-async function uploadToCatbox(base64Data: string): Promise<string | null> {
-  try {
-    const cleanBase64 = base64Data.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(cleanBase64, 'base64');
-    const blob = new Blob([buffer], { type: 'image/png' });
-
-    const formData = new FormData();
-    formData.append('reqtype', 'fileupload');
-    formData.append('userhash', '');
-    formData.append('fileToUpload', blob, 'face.png');
-
-    const uploadResp = await fetch('https://catbox.moe/user/api.php', {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (uploadResp.ok) {
-      const publicUrl = await uploadResp.text();
-      console.log('Face uploaded to:', publicUrl);
-      return publicUrl.trim();
-    }
-    console.error('Failed to upload face image to temp host');
-    return null;
-  } catch (err) {
-    console.error('Error handling face image upload:', err);
-    return null;
-  }
-}
-
 export async function POST(request: Request) {
   try {
-    const { prompt, model, image, strength, faceImage, isRecreate } = await request.json();
+    const { prompt, model, image, strength, faceUrl, isRecreate } = await request.json();
 
     if (!prompt) {
       return NextResponse.json(
@@ -48,15 +19,10 @@ export async function POST(request: Request) {
       );
     }
 
-    let facePublicUrl: string | null = null;
-    if (faceImage) {
-      facePublicUrl = await uploadToCatbox(faceImage);
-    }
-
     if (isRecreate && image) {
       let imageParam = image;
-      if (facePublicUrl) {
-        imageParam = `${image}|${facePublicUrl}`;
+      if (faceUrl) {
+        imageParam = `${image}|${faceUrl}`;
       }
 
       const requestBody = {
@@ -102,7 +68,7 @@ export async function POST(request: Request) {
     const BASE_THUMBNAIL_PROMPT = ", high quality youtube thumbnail, no extra text, no watermark, no border, 8k resolution, cinematic lighting, vibrant colors, trending on artstation, highly detailed, sharp focus, viral clickbait style";
     const finalPrompt = `${prompt}${BASE_THUMBNAIL_PROMPT}`;
     const encodedPrompt = encodeURIComponent(finalPrompt);
-    let url = `https://bhaujai.cc/api/v1/ai/image?prompt=${encodedPrompt}&model=${model || 'klein'}&aspectRatio=16:9&width=1920&height=1080`;
+    let url = `https://bhaujai.cc/api/v1/ai/image?prompt=${encodedPrompt}&model=${model || 'nanobanana'}&aspectRatio=16:9&width=1920&height=1080`;
 
     if (image) {
       url += `&image=${encodeURIComponent(image)}`;
@@ -110,11 +76,11 @@ export async function POST(request: Request) {
       url += `&strength=${strengthValue}`;
     }
 
-    if (facePublicUrl) {
+    if (faceUrl) {
       if (url.includes('&image=')) {
-        url += `|${encodeURIComponent(facePublicUrl)}`;
+        url += `|${encodeURIComponent(faceUrl)}`;
       } else {
-        url += `&image=${encodeURIComponent(facePublicUrl)}`;
+        url += `&image=${encodeURIComponent(faceUrl)}`;
       }
     }
 
