@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     const BASE_THUMBNAIL_PROMPT = ", high quality youtube thumbnail, no extra text, no watermark, no border, 8k resolution, cinematic lighting, vibrant colors, trending on artstation, highly detailed, sharp focus, viral clickbait style";
     const finalPrompt = `${prompt}${BASE_THUMBNAIL_PROMPT}`;
     const encodedPrompt = encodeURIComponent(finalPrompt);
-    let url = `https://bhaujai.cc/api/v1/ai/image?prompt=${encodedPrompt}&model=${model || 'nanobanana'}&aspectRatio=16:9&width=1920&height=1080`;
+    let url = `https://bhaujai.cc/api/v1/ai/image?prompt=${encodedPrompt}&model=${model || 'klein'}&aspectRatio=16:9&width=1920&height=1080`;
 
     if (image) {
       url += `&image=${encodeURIComponent(image)}`;
