@@ -161,17 +161,39 @@ export default function StudioPage() {
     }
   }
 
-  const handleFaceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File, maxSize: number = 1024, quality: number = 0.8): Promise<{ dataUrl: string; blob: Blob }> => {
+    return new Promise((resolve) => {
+      const img = new window.Image()
+      const url = URL.createObjectURL(file)
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        const canvas = document.createElement('canvas')
+        let { width, height } = img
+        if (width > maxSize || height > maxSize) {
+          const ratio = Math.min(maxSize / width, maxSize / height)
+          width = Math.round(width * ratio)
+          height = Math.round(height * ratio)
+        }
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, width, height)
+        canvas.toBlob((blob) => {
+          const dataUrl = canvas.toDataURL('image/jpeg', quality)
+          resolve({ dataUrl, blob: blob! })
+        }, 'image/jpeg', quality)
+      }
+      img.src = url
+    })
+  }
+
+  const handleFaceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
-      setFaceFile(file)
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setFaceImage(event.target.result as string)
-        }
-      }
-      reader.readAsDataURL(file)
+      const { dataUrl, blob } = await compressImage(file)
+      const compressedFile = new File([blob], 'face.jpg', { type: 'image/jpeg' })
+      setFaceFile(compressedFile)
+      setFaceImage(dataUrl)
     }
   }
 
