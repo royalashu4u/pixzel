@@ -44,9 +44,10 @@ export default function StudioPage() {
     // If in Recreate mode, override the text prompt with a specialized "Recreate" instruction
     // unless the user has typed something specific (optional enhancement, but for now we force the recreate prompt if they are in that tab)
     if (activeTab === 'Recreate') {
-       finalPrompt = "Recreate this youtube thumbnail, preserve composition and main elements, enhance quality, 8k resolution, cinematic lighting, vibrant colors, viral clickbait style, highly detailed"
        if (faceImage) {
-         finalPrompt += ", replacing the main subject's face with the provided face image"
+         finalPrompt = "Combine the composition, layout, lighting, color grading, and overall style of image1 (the thumbnail to clone) with the subject identity from image2 (the reference face/character). Replace the original subject in image1 with the person/character from image2 while preserving the exact pose, camera angle, facial expression, framing, and thumbnail aesthetics of image1. Maintain the facial likeness, unique features, and identity details from image2. Ensure the result looks natural and seamlessly integrated into the thumbnail scene. Style requirements: ultra-sharp, highly detailed, high contrast, vibrant thumbnail look, professional YouTube thumbnail quality, clean edges, crisp focus, 8K resolution."
+       } else {
+         finalPrompt = "Recreate this youtube thumbnail with the exact same composition, layout, lighting, color grading, poses, camera angles, framing, and overall style. Preserve all main elements and enhance quality. Style requirements: ultra-sharp, highly detailed, high contrast, vibrant thumbnail look, professional YouTube thumbnail quality, clean edges, crisp focus, 8K resolution."
        }
     }
 
@@ -64,6 +65,7 @@ export default function StudioPage() {
       if (activeTab === 'Recreate' && referenceImage) {
         body.image = referenceImage
         body.strength = strength
+        body.isRecreate = true
         if (faceImage) {
           body.faceImage = faceImage
         }
