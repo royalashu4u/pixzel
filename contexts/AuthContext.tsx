@@ -10,11 +10,13 @@ import {
   signInWithEmailAndPassword,
   User 
 } from 'firebase/auth'
-import { auth } from '@/lib/firebase/client'
+import { doc, onSnapshot } from 'firebase/firestore'
+import { auth, db } from '@/lib/firebase/client'
 
 interface AuthContextType {
   user: User | null
   loading: boolean
+  credits: number | null
   signInWithGoogle: () => Promise<void>
   signInWithEmail: (e: string, p: string) => Promise<void>
   signUpWithEmail: (e: string, p: string) => Promise<void>
@@ -30,48 +32,58 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [credits, setCredits] = useState<number | null>(null)
 
   useEffect(() => {
-    // Initialize auth listener
     if (!auth) {
       setLoading(false)
       return
     }
+
+    let unsubscribeSnapshot: (() => void) | undefined
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser)
       
       try {
         if (currentUser) {
+          // Send token to server for session & rigorous user sync
           const idToken = await currentUser.getIdToken(true)
           await fetch('/api/auth/session', {
             method: 'POST',
             body: JSON.stringify({ idToken }),
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
+          })
+
+          // Listen for credits changes via Firestore (doc is guaranteed to exist now)
+          const userDocRef = doc(db, 'users', currentUser.uid)
+          unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
+            if (doc.exists()) {
+              setCredits(doc.data()?.credits ?? 0)
+            }
           })
         } else {
-          // No user, clear session cookie
-          await fetch('/api/auth/session', {
-            method: 'DELETE',
-          })
+          setCredits(null)
+          if (unsubscribeSnapshot) {
+            unsubscribeSnapshot()
+          }
+          await fetch('/api/auth/session', { method: 'DELETE' })
         }
       } catch (error) {
-        console.error('Session update error:', error)
+        console.error('Session/Firestore update error:', error)
       } finally {
         setLoading(false)
       }
     })
 
-    return unsubscribe
+    return () => {
+      unsubscribe()
+      if (unsubscribeSnapshot) unsubscribeSnapshot()
+    }
   }, [])
 
   const signInWithGoogle = async () => {
-    if (!auth) {
-      console.warn("Auth not initialized")
-      return
-    }
+    if (!auth) return
     const provider = new GoogleAuthProvider()
     await signInWithPopup(auth, provider)
   }
@@ -92,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut }}>
+    <AuthContext.Provider value={{ user, loading, credits, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut }}>
       {!loading && children}
     </AuthContext.Provider>
   )

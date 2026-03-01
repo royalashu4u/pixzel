@@ -1,0 +1,106 @@
+'use client'
+
+import { useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { Wand2 } from 'lucide-react'
+import Link from 'next/link'
+
+export function LoginForm() {
+  const { signInWithGoogle, signInWithEmail } = useAuth()
+  
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setIsSubmitting(true)
+    
+    try {
+      await signInWithEmail(email, password)
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="w-full max-w-md bg-slate-800/50 backdrop-blur-xl p-8 rounded-2xl border border-white/10 shadow-xl">
+      <div className="text-center mb-8">
+        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <Wand2 className="w-6 h-6 text-white" />
+        </div>
+        <h1 className="text-2xl font-bold">Welcome Back</h1>
+        <p className="text-slate-400 mt-2">Sign in to continue creating</p>
+      </div>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-xl mb-6 text-sm">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleEmailSignIn} className="space-y-4 mb-6">
+        <div>
+          <label className="block text-sm font-medium text-slate-400 mb-1">Email</label>
+          <input 
+            type="email" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+            placeholder="you@example.com"
+            required
+            disabled={isSubmitting}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-400 mb-1">Password</label>
+          <input 
+            type="password" 
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+            placeholder="••••••••"
+            required
+            disabled={isSubmitting}
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full relative group overflow-hidden bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-xl hover:from-purple-600 hover:to-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span className="relative z-10">{isSubmitting ? 'Signing In...' : 'Sign In'}</span>
+        </button>
+      </form>
+
+      <div className="relative mb-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-white/10"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-slate-800 text-slate-400">Or continue with</span>
+        </div>
+      </div>
+
+      <button
+        onClick={() => signInWithGoogle()}
+        disabled={isSubmitting}
+        className="w-full flex items-center justify-center gap-3 bg-white text-slate-900 font-bold py-3 px-4 rounded-xl hover:bg-slate-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+        Google
+      </button>
+
+      <p className="text-center mt-6 text-slate-400 text-sm">
+        Don&apos;t have an account?{' '}
+        <Link href="/signup" className="text-purple-400 hover:text-purple-300 font-medium">
+          Sign up
+        </Link>
+      </p>
+    </div>
+  )
+}
