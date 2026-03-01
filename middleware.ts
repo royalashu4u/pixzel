@@ -11,17 +11,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // TODO: Verify session with Firebase Admin once implemented
-  
-  // For now, we rely on client-side auth state which will redirect if not logged in
-  // Server-side middleware check:
-  
-  /*
-  const token = request.cookies.get('firebase-token')
-  if (!token && path.startsWith('/studio')) {
+  // Server-side middleware check
+  if (!session && (path.startsWith('/studio') || path.startsWith('/dashboard'))) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
-  */
 
   return NextResponse.next()
 }
