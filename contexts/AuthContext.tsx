@@ -98,16 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     if (!auth) return
     const provider = new GoogleAuthProvider()
-    try {
-      await signInWithPopup(auth, provider)
-    } catch (error: any) {
-      // If popup is blocked by browser COOP policy, fall back to redirect
-      if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-        await signInWithRedirect(auth, provider)
-      } else {
-        throw error
-      }
-    }
+    // Using the professional, standard method without fallback patchwork
+    await signInWithPopup(auth, provider)
   }
 
   const signInWithEmail = async (email: string, pass: string) => {
