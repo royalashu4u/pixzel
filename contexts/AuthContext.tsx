@@ -44,17 +44,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let unsubscribeSnapshot: (() => void) | undefined
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser)
+      setLoading(true) // Ensure loading is true while verifying session
       
       try {
         if (currentUser) {
           // Send token to server for session & rigorous user sync
           const idToken = await currentUser.getIdToken(true)
-          await fetch('/api/auth/session', {
+          const sessionRes = await fetch('/api/auth/session', {
             method: 'POST',
             body: JSON.stringify({ idToken }),
             headers: { 'Content-Type': 'application/json' },
           })
+
+          if (!sessionRes.ok) {
+            console.error('Failed to establish session, signing out.')
+            await firebaseSignOut(auth)
+            setUser(null)
+            return
+          }
+
+          // Only set user after successful session creation to prevent premature redirect
+          setUser(currentUser)
 
           // Listen for credits changes via Firestore (doc is guaranteed to exist now)
           const userDocRef = doc(db, 'users', currentUser.uid)
@@ -64,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
           })
         } else {
+          setUser(null)
           setCredits(null)
           if (unsubscribeSnapshot) {
             unsubscribeSnapshot()
@@ -72,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Session/Firestore update error:', error)
+        setUser(null)
       } finally {
         setLoading(false)
       }

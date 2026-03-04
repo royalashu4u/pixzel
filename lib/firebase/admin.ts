@@ -19,12 +19,25 @@ function initializeFirebaseAdmin() {
   }
 
   try {
-    // Read service account JSON directly from project root
-    const serviceAccountPath = join(process.cwd(), 'pixzel-6f88a-firebase-adminsdk-fbsvc-d768ce380f.json');
-    const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
+    let credential;
+
+    if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+      // Use environment variables (Vercel/Production)
+      credential = admin.credential.cert({
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        // Handle newline escaping in environment variables
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      });
+    } else {
+      // Fallback: Read service account JSON directly from project root (Local)
+      const serviceAccountPath = join(process.cwd(), 'pixzel-6f88a-firebase-adminsdk-fbsvc-d768ce380f.json');
+      const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
+      credential = admin.credential.cert(serviceAccount);
+    }
 
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+      credential,
     });
   } catch (error: any) {
     console.error('Firebase Admin initialization error:', error.message);
