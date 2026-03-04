@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { fabric } from 'fabric'
+import * as fabric from 'fabric'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface CanvasProps {
