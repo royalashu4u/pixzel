@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, LogOut, Coins, ChevronDown } from 'lucide-react'
+import { LogOut, Coins, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 
 export function UserMenu() {
@@ -44,15 +44,6 @@ export function UserMenu() {
             </div>
             
             <div className="p-2 space-y-1">
-              <Link 
-                href="/dashboard"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition"
-              >
-                <User className="w-4 h-4" />
-                Dashboard
-              </Link>
-              
               <button 
                 onClick={() => {
                   setIsOpen(false);

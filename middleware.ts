@@ -35,7 +35,7 @@ export async function middleware(request: NextRequest) {
   const session = request.cookies.get('session')
   const path = request.nextUrl.pathname
 
-  if (path.startsWith('/studio') || path.startsWith('/dashboard') || path.startsWith('/api/protected')) {
+  if (path.startsWith('/studio') || path.startsWith('/api/protected')) {
     if (!session?.value) {
       if (path.startsWith('/api/')) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -63,7 +63,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/studio/:path*',
-    '/dashboard/:path*',
     '/api/protected/:path*'
   ],
 }

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { useAuth } from '@/contexts/AuthContext'
 import { 
   RotateCcw, 
   Edit3, 
@@ -11,14 +12,13 @@ import {
   Sparkles, 
   Image as ImageIcon,
   User,
-  MessageSquare,
-  HelpCircle,
   Download,
   Maximize2,
   X
 } from 'lucide-react'
 
 export default function StudioPage() {
+  const { credits } = useAuth()
   const [activeTab, setActiveTab] = useState('Prompt')
   const [prompt, setPrompt] = useState('Generate a sinister, greedy version of Mario with a cigar, surrounded by poker chips & stacks of cash & place the Nintendo logo behind him')
   const [isGenerating, setIsGenerating] = useState(false)
@@ -231,7 +231,7 @@ export default function StudioPage() {
           {/* Right: Credits */}
           <div className="flex items-center gap-2 font-medium">
             <div className="w-5 h-5 bg-zinc-800 rounded-full flex items-center justify-center text-xs text-zinc-400">P</div>
-            <span className="text-white font-bold text-lg">200</span>
+            <span className="text-white font-bold text-lg">{credits !== null ? credits : '...'}</span>
             <span className="text-zinc-400">Credits</span>
           </div>
         </div>
