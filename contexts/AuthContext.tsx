@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { 
   onAuthStateChanged, 
   signInWithPopup, 
+  signInWithRedirect,
   GoogleAuthProvider, 
   signOut as firebaseSignOut,
   createUserWithEmailAndPassword,
@@ -85,7 +86,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     if (!auth) return
     const provider = new GoogleAuthProvider()
-    await signInWithPopup(auth, provider)
+    try {
+      await signInWithPopup(auth, provider)
+    } catch (error: any) {
+      // If popup is blocked by browser COOP policy, fall back to redirect
+      if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+        await signInWithRedirect(auth, provider)
+      } else {
+        throw error
+      }
+    }
   }
 
   const signInWithEmail = async (email: string, pass: string) => {
